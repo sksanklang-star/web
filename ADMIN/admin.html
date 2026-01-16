@@ -13,6 +13,7 @@
         body {
             font-family: 'Kanit', sans-serif;
             background-color: #f4f6f9;
+            overflow-x: hidden;
         }
 
         /* Sidebar Styling */
@@ -25,7 +26,13 @@
             background: linear-gradient(180deg, #2c0e58 0%, #4a148c 100%);
             color: white;
             padding-top: 20px;
-            z-index: 1000;
+            z-index: 1050;
+            transition: all 0.3s ease; /* เพิ่ม Transition ให้ลื่นไหล */
+        }
+
+        /* เมื่อ Sidebar ปิด */
+        .sidebar.collapsed {
+            left: -260px;
         }
 
         .sidebar-brand {
@@ -45,7 +52,7 @@
         .nav-link:hover, .nav-link.active {
             background-color: rgba(255,255,255,0.1);
             color: white;
-            border-left: 5px solid #ffcc00; /* Yellow accent */
+            border-left: 5px solid #ffcc00;
         }
         .nav-link i { margin-right: 10px; }
 
@@ -53,74 +60,65 @@
         .main-content {
             margin-left: 260px;
             padding: 30px;
+            transition: all 0.3s ease;
         }
 
-        /* Stat Cards */
-        .stat-card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            transition: transform 0.3s;
+        /* เมื่อ Main Content ขยายเต็มหน้าจอ */
+        .main-content.expanded {
+            margin-left: 0;
         }
-        .stat-card:hover { transform: translateY(-5px); }
-        .icon-box {
-            width: 50px; height: 50px;
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
+
+        /* ปุ่ม Toggle */
+        #sidebarToggle {
+            cursor: pointer;
             font-size: 1.5rem;
+            margin-right: 15px;
+            color: #2c0e58;
         }
 
-        /* Table Styling */
-        .table-card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-            padding: 20px;
-            margin-top: 25px;
-        }
-        .table thead th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            border-bottom: 2px solid #eee;
-        }
-        .slip-preview-btn {
-            padding: 2px 10px;
-            font-size: 0.85rem;
+        /* Overlay สำหรับมือถือ */
+        #sidebarOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5);
+            z-index: 1040;
         }
 
-        /* Filter Buttons */
-        .filter-btn {
-            border-radius: 20px;
-            padding: 5px 15px;
-            font-size: 0.9rem;
-            margin-right: 5px;
-            border: 1px solid #ddd;
-            background: white;
-            color: #666;
-            transition: 0.2s;
+        @media (max-width: 768px) {
+            .sidebar {
+                left: -260px; /* ซ่อนไว้ก่อนในมือถือ */
+            }
+            .sidebar.show {
+                left: 0; /* แสดงเมื่อกดปุ่ม */
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+            #sidebarOverlay.show {
+                display: block;
+            }
         }
-        .filter-btn:hover { background: #f0f0f0; }
-        
-        .filter-btn.active.pending { background-color: #fff3cd; color: #856404; border-color: #ffeeba; font-weight: 600; }
-        .filter-btn.active.approved { background-color: #d4edda; color: #155724; border-color: #c3e6cb; font-weight: 600; }
-        .filter-btn.active.rejected { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; font-weight: 600; }
-        .filter-btn.active.all { background-color: #e2e3e5; color: #383d41; border-color: #d6d8db; font-weight: 600; }
 
-        /* Status Badges */
+        /* UI อื่นๆ */
+        .stat-card { border: none; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: transform 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .icon-box { width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+        .table-card { background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); padding: 20px; margin-top: 25px; }
         .badge-pending { background-color: #fff8e1; color: #f57c00; border: 1px solid #ffe0b2; }
         .badge-success { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
         .badge-danger { background-color: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
-
-        @media (max-width: 768px) {
-            .sidebar { width: 70px; }
-            .sidebar-brand span, .nav-link span { display: none; }
-            .main-content { margin-left: 70px; }
-        }
+        .filter-btn { border-radius: 20px; padding: 5px 15px; font-size: 0.9rem; margin-right: 5px; border: 1px solid #ddd; background: white; transition: 0.2s; }
+        .filter-btn.active.pending { background-color: #fff3cd; color: #856404; }
     </style>
 </head>
 <body>
 
-    <div class="sidebar d-flex flex-column">
+    <div id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <div class="sidebar d-flex flex-column" id="sidebar">
         <div class="sidebar-brand">
             <i class="bi bi-buildings"></i> <span>เทศบาล Admin</span>
         </div>
@@ -130,14 +128,10 @@
             </a>
             <a href="#" class="nav-link position-relative">
                 <i class="bi bi-file-earmark-check"></i> <span>รอตรวจสอบ</span>
-                <span class="position-absolute top-50 end-0 translate-middle-y badge rounded-pill bg-danger me-3" id="sidebarBadge">0</span>
+                <span class="position-absolute top-50 end-0 translate-middle-y badge rounded-pill bg-danger me-3" id="sidebarBadge">2</span>
             </a>
-            <a href="#" class="nav-link">
-                <i class="bi bi-people"></i> <span>รายชื่อลูกบ้าน</span>
-            </a>
-            <a href="#" class="nav-link">
-                <i class="bi bi-printer"></i> <span>รายงาน</span>
-            </a>
+            <a href="#" class="nav-link"><i class="bi bi-people"></i> <span>รายชื่อลูกบ้าน</span></a>
+            <a href="#" class="nav-link"><i class="bi bi-printer"></i> <span>รายงาน</span></a>
         </nav>
         <div class="mt-auto p-3">
             <a href="#" onclick="signOut()" class="nav-link text-danger">
@@ -146,15 +140,13 @@
         </div>
     </div>
 
-    <div class="main-content">
+    <div class="main-content" id="mainContent">
         
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center mb-4">
+            <i class="bi bi-list" id="sidebarToggle" onclick="toggleSidebar()"></i>
             <div>
-                <h3 class="fw-bold mb-0">ภาพรวมระบบ (Overview)</h3>
-                <small class="text-muted">ข้อมูล ณ วันที่ 15 มกราคม 2569</small>
-            </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-outline-primary"><i class="bi bi-arrow-clockwise"></i> รีเฟรช</button>
+                <h3 class="fw-bold mb-0">ภาพรวมระบบ</h3>
+                <small class="text-muted">เทศบาลตำบลสันกลาง</small>
             </div>
         </div>
 
@@ -162,74 +154,29 @@
             <div class="col-md-4">
                 <div class="card stat-card p-3">
                     <div class="d-flex align-items-center">
-                        <div class="icon-box bg-success bg-opacity-10 text-success me-3">
-                            <i class="bi bi-currency-dollar"></i>
-                        </div>
-                        <div>
-                            <div class="text-muted small">ยอดชำระเดือนนี้</div>
-                            <h4 class="fw-bold mb-0">45,200 ฿</h4>
-                        </div>
+                        <div class="icon-box bg-success bg-opacity-10 text-success me-3"><i class="bi bi-currency-dollar"></i></div>
+                        <div><div class="text-muted small">ยอดชำระเดือนนี้</div><h4 class="fw-bold mb-0">45,200 ฿</h4></div>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="card stat-card p-3 border-warning border-start border-4">
                     <div class="d-flex align-items-center">
-                        <div class="icon-box bg-warning bg-opacity-10 text-warning me-3">
-                            <i class="bi bi-hourglass-split"></i>
-                        </div>
-                        <div>
-                            <div class="text-muted small">รอตรวจสอบสลิป</div>
-                            <h4 class="fw-bold mb-0 text-warning" id="pendingCount">0 รายการ</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card stat-card p-3">
-                    <div class="d-flex align-items-center">
-                        <div class="icon-box bg-danger bg-opacity-10 text-danger me-3">
-                            <i class="bi bi-exclamation-circle"></i>
-                        </div>
-                        <div>
-                            <div class="text-muted small">ค้างชำระ (เกิน 3 เดือน)</div>
-                            <h4 class="fw-bold mb-0">12 ครัวเรือน</h4>
-                        </div>
+                        <div class="icon-box bg-warning bg-opacity-10 text-warning me-3"><i class="bi bi-hourglass-split"></i></div>
+                        <div><div class="text-muted small">รอตรวจสอบสลิป</div><h4 class="fw-bold mb-0 text-warning" id="pendingCount">2 รายการ</h4></div>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="table-card">
-            
-            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold mb-0">รายการแจ้งชำระล่าสุด</h5>
-                
-                <div class="mt-2 mt-md-0">
-                    <button class="filter-btn pending active" onclick="setFilter('pending')">
-                        <i class="bi bi-clock"></i> รอตรวจสอบ
-                    </button>
-                    <button class="filter-btn approved" onclick="setFilter('approved')">
-                        <i class="bi bi-check-circle"></i> อนุมัติแล้ว
-                    </button>
-                    <button class="filter-btn rejected" onclick="setFilter('rejected')">
-                        <i class="bi bi-x-circle"></i> ไม่อนุมัติ
-                    </button>
-                    <button class="filter-btn all" onclick="setFilter('all')">
-                        <i class="bi bi-list"></i> ทั้งหมด
-                    </button>
-                </div>
-            </div>
-            
             <div class="table-responsive">
                 <table class="table align-middle table-hover">
                     <thead>
                         <tr>
                             <th>วันที่แจ้ง</th>
                             <th>ชื่อผู้ชำระ</th>
-                            <th>รายละเอียด</th>
                             <th>ยอดเงิน</th>
-                            <th>หลักฐาน</th>
                             <th>สถานะ</th>
                             <th>จัดการ</th>
                         </tr>
@@ -237,30 +184,6 @@
                     <tbody id="adminTableBody">
                         </tbody>
                 </table>
-                <div id="noDataMessage" class="text-center py-5 text-muted d-none">
-                    <i class="bi bi-inbox fs-1"></i>
-                    <p class="mt-2">ไม่มีข้อมูลในสถานะนี้</p>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="modal fade" id="slipModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">ตรวจสอบหลักฐานการโอน</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-center bg-light">
-                    <img id="modalSlipImage" src="" class="img-fluid rounded border" alt="Slip">
-                    <div class="mt-3 fw-bold" id="modalAmount"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" onclick="rejectSlip()">ไม่อนุมัติ</button>
-                    <button type="button" class="btn btn-success" onclick="approveSlip()">อนุมัติ (Correct)</button>
-                </div>
             </div>
         </div>
     </div>
@@ -268,176 +191,47 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Mock Data for Admin
-        let transactions = [
-            { 
-                id: 1, 
-                date: '15 ม.ค. 69 10:30', 
-                name: 'นาย สมชาย ใจดี', 
-                detail: 'ม.1 บ้าน 111', 
-                amount: 80, 
-                status: 'pending', 
-                slip: 'https://via.placeholder.com/300x500/e3f2fd/1565c0?text=Slip+Pending+1' 
-            },
-            { 
-                id: 2, 
-                date: '15 ม.ค. 69 09:15', 
-                name: 'นาง สมหญิง รักสะอาด', 
-                detail: 'ม.1 บ้าน 111/2', 
-                amount: 40, 
-                status: 'pending', 
-                slip: 'https://via.placeholder.com/300x500/e3f2fd/1565c0?text=Slip+Pending+2' 
-            },
-            { 
-                id: 3, 
-                date: '14 ม.ค. 69 16:45', 
-                name: 'บจก. ร้านค้าเจริญ', 
-                detail: 'ม.1 บ้าน 112', 
-                amount: 100, 
-                status: 'approved', 
-                slip: 'https://via.placeholder.com/300x500/c8e6c9/2e7d32?text=Slip+Approved' 
-            },
-            { 
-                id: 4, 
-                date: '14 ม.ค. 69 08:30', 
-                name: 'นาย มีชัย วินัยดี', 
-                detail: 'ม.2 บ้าน 88', 
-                amount: 40, 
-                status: 'rejected', 
-                slip: 'https://via.placeholder.com/300x500/ffcdd2/c62828?text=Slip+Rejected' 
+        // ฟังก์ชัน เปิด-ปิด Sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            if (window.innerWidth > 768) {
+                // Desktop: ยุบ/ขยาย
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+            } else {
+                // Mobile: เลื่อนเข้า/ออก
+                sidebar.classList.toggle('show');
+                overlay.classList.toggle('show');
             }
+        }
+
+        // Mock Data & Render (ส่วนเดิมของคุณ)
+        let transactions = [
+            { id: 1, date: '15 ม.ค. 69', name: 'นาย สมชาย ใจดี', amount: 80, status: 'pending' },
+            { id: 2, date: '15 ม.ค. 69', name: 'นาง สมหญิง รักสะอาด', amount: 40, status: 'pending' }
         ];
 
-        const tableBody = document.getElementById('adminTableBody');
-        const noDataMsg = document.getElementById('noDataMessage');
-        
-        // Default Filter is 'pending'
-        let currentFilter = 'pending'; 
-        let currentTxId = null;
-
-        // 1. Render Function
         function renderAdminTable() {
-            let filteredData = transactions;
-
-            // Apply Filter
-            if (currentFilter !== 'all') {
-                filteredData = transactions.filter(t => t.status === currentFilter);
-            }
-
-            // Generate HTML
+            const tableBody = document.getElementById('adminTableBody');
             let html = '';
-            if (filteredData.length === 0) {
-                tableBody.innerHTML = '';
-                noDataMsg.classList.remove('d-none');
-            } else {
-                noDataMsg.classList.add('d-none');
-                filteredData.forEach(tx => {
-                    let badge = '';
-                    let buttons = '';
-
-                    if(tx.status === 'pending') {
-                        badge = '<span class="badge badge-pending"><i class="bi bi-clock"></i> รอตรวจสอบ</span>';
-                        buttons = `<a href="admin_detail.html?id=${tx.id}" class="btn btn-sm btn-primary me-1 shadow-sm"><i class="bi bi-eye"></i> ตรวจสอบรายละเอียด</a>`;
-                    } else if (tx.status === 'approved') {
-                        badge = '<span class="badge badge-success"><i class="bi bi-check-circle"></i> อนุมัติแล้ว</span>';
-                        buttons = `<a href="admin_detail.html?id=${tx.id}" class="btn btn-sm btn-success me-1 shadow-sm"><i class="bi bi-eye"></i> ดูรายละเอียด</a>`;
-                    } else {
-                        badge = '<span class="badge badge-danger">ไม่อนุมัติ</span>';
-                        buttons = `<a href="admin_detail.html?id=${tx.id}" class="btn btn-sm btn-warning me-1 shadow-sm"><i class="bi bi-eye"></i> ดูรายละเอียด</a>`;
-                    }
-
-                    html += `
-                        <tr>
-                            <td class="small text-muted">${tx.date}</td>
-                            <td class="fw-bold">${tx.name}</td>
-                            <td class="small">${tx.detail}</td>
-                            <td class="fw-bold text-primary">${tx.amount}</td>
-                            <td>
-                                <button class="btn btn-light border slip-preview-btn" onclick="openSlipModal(${tx.id})">
-                                    <i class="bi bi-image"></i> ดูสลิป
-                                </button>
-                            </td>
-                            <td>${badge}</td>
-                            <td>${buttons}</td>
-                        </tr>
-                    `;
-                });
-                tableBody.innerHTML = html;
-            }
-
-            // Update Counts in UI
-            updateStats();
-        }
-
-        // 2. Filter Logic
-        function setFilter(status) {
-            currentFilter = status;
-
-            // Update Buttons UI
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.classList.contains(status)) {
-                    btn.classList.add('active');
-                }
+            transactions.forEach(tx => {
+                html += `
+                    <tr>
+                        <td>${tx.date}</td>
+                        <td class="fw-bold">${tx.name}</td>
+                        <td class="text-primary fw-bold">${tx.amount}</td>
+                        <td><span class="badge badge-pending">รอตรวจสอบ</span></td>
+                        <td><button class="btn btn-sm btn-primary">ตรวจสอบ</button></td>
+                    </tr>
+                `;
             });
-
-            renderAdminTable();
+            tableBody.innerHTML = html;
         }
 
-        // 3. Modal & Actions Logic
-        const slipModal = new bootstrap.Modal(document.getElementById('slipModal'));
-
-        function openSlipModal(id) {
-            currentTxId = id;
-            const tx = transactions.find(t => t.id === id);
-            
-            document.getElementById('modalSlipImage').src = tx.slip;
-            document.getElementById('modalAmount').innerText = `ยอดตามระบบ: ${tx.amount} บาท`;
-            
-            slipModal.show();
-        }
-
-        function approveSlip() {
-            updateTransactionStatus(currentTxId, 'approved');
-            slipModal.hide();
-        }
-
-        function rejectSlip() {
-            updateTransactionStatus(currentTxId, 'rejected');
-            slipModal.hide();
-            
-        }
-
-        function updateTransactionStatus(id, newStatus) {
-            // Find and update status
-            const tx = transactions.find(t => t.id === id);
-            tx.status = newStatus;
-            
-            // Show Alert
-            if(newStatus === 'approved') {
-                alert(`อนุมัติยอดของ ${tx.name} เรียบร้อยแล้ว`);
-            } else {
-                alert(`ไม่อนุมัติยอดของ ${tx.name}`);
-            }
-
-            // Re-render table (The item will disappear if filter is still 'pending')
-            renderAdminTable();
-        }
-
-        function updateStats() {
-            // Count pending items
-            const pendingCount = transactions.filter(t => t.status === 'pending').length;
-            document.getElementById('pendingCount').innerText = `${pendingCount} รายการ`;
-            document.getElementById('sidebarBadge').innerText = pendingCount;
-        }
-
-        // Init
         renderAdminTable();
-
-        function signOut() {
-            window.location.href = "login.html";
-        }
-
     </script>
 </body>
 </html>

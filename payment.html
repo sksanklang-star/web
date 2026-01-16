@@ -173,7 +173,7 @@
                     </div>
                     <hr>
                     <div class="d-flex justify-content-end gap-2">
-                        <button class="btn btn-warning" onclick="history.back()">ย้อนกลับ</button>
+                        <button class="btn btn-warning" onclick="back()">ย้อนกลับ</button>
                         <button class="btn btn-light" onclick="resetForm()">รีเซ็ต</button>
                         <button class="btn btn-primary px-4" style="background: #4a148c; border:none;" onclick="confirmPayment()">ยืนยันชำระเงิน</button>
                     </div>
@@ -285,6 +285,10 @@
 
         function confirmPayment() {
             window.location.href = "upload.html";
+        }
+
+        function back() {
+            window.location.href = "result.html";
         }
 
         renderTable();
