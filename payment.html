@@ -10,13 +10,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
 
     <style>
+        /* Shake animation for errors */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .is-invalid {
+            border-color: #dc3545 !important;
+            animation: shake 0.2s ease-in-out 0s 2;
+        }
         body {
             font-family: 'Kanit', sans-serif;
             background-color: #f4f6f9;
             min-height: 100vh;
             padding: 20px 0;
         }
-
         .main-card {
             border: none;
             border-radius: 15px;
@@ -26,14 +35,12 @@
             margin: 0 auto;
             overflow: hidden;
         }
-
         .header-section {
             background: linear-gradient(135deg, #4a148c 0%, #7c43bd 100%);
             color: white;
             padding: 30px 20px;
             text-align: center;
         }
-
         .info-card {
             background-color: #f8f9fa;
             border-radius: 12px;
@@ -41,16 +48,9 @@
             border-left: 5px solid #4a148c;
             margin-bottom: 25px;
         }
-
         .info-label { font-weight: 600; color: #555; }
         .info-value { font-weight: 500; color: #4a148c; }
 
-        /* --- TABLE STYLES --- */
-        .table-modern {
-            border-collapse: separate;
-            border-spacing: 0;
-            width: 100%;
-        }
         .table-modern thead th {
             background-color: #f1f3f5;
             color: #495057;
@@ -62,27 +62,11 @@
             padding: 12px;
             vertical-align: middle;
             border-bottom: 1px solid #eee;
-            transition: background-color 0.2s;
         }
+        .row-paid { background-color: #e8f5e9 !important; color: #2e7d32; }
+        .row-pending { background-color: #fff8e1 !important; color: #e65100; }
+        .row-checked { background-color: #fff9c4 !important; }
 
-        /* 1. Paid Row (Green) */
-        .row-paid {
-            background-color: #e8f5e9 !important;
-            color: #2e7d32;
-        }
-
-        /* 2. Pending Row (Orange) */
-        .row-pending {
-            background-color: #fff8e1 !important;
-            color: #e65100;
-        }
-
-        /* 3. Checked Row (Yellow Highlight) */
-        .row-checked {
-            background-color: #fff9c4 !important;
-        }
-
-        /* Status Badges */
         .status-badge {
             padding: 5px 12px;
             border-radius: 20px;
@@ -90,20 +74,10 @@
             font-weight: 600;
             display: inline-block;
         }
-        .status-overdue {
-            background-color: #ffebee;
-            color: #c62828;
-        }
-        .status-paid {
-            background-color: #c8e6c9;
-            color: #2e7d32;
-        }
-        .status-pending {
-            background-color: #ffe0b2;
-            color: #e65100;
-        }
+        .status-overdue { background-color: #ffebee; color: #c62828; }
+        .status-paid { background-color: #c8e6c9; color: #2e7d32; }
+        .status-pending { background-color: #ffe0b2; color: #e65100; }
 
-        /* Checkbox Style */
         .form-check-input.pay-checkbox {
             width: 1.4em;
             height: 1.4em;
@@ -114,28 +88,23 @@
             background-color: #4a148c;
             border-color: #4a148c;
         }
-
         .total-display {
             font-size: 1.8rem;
             font-weight: 600;
             color: #4a148c;
         }
-
-        .text-nowrap { white-space: nowrap !important; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="main-card">
-            
             <div class="header-section">
                 <h3 class="fw-bold mb-1"><i class="bi bi-calculator"></i> คำนวณยอดชำระเงิน</h3>
                 <small>2. ตรวจสอบและเลือกรายการที่ต้องการชำระ</small>
             </div>
 
             <div class="card-body p-4">
-                
                 <div class="info-card">
                     <div class="row g-2">
                         <div class="col-6 col-md-3"><span class="info-label">ปีงบประมาณ:</span> <span class="info-value">2569</span></div>
@@ -155,16 +124,21 @@
                                 <th class="text-center">เลือก</th>
                             </tr>
                         </thead>
-                        <tbody id="tableBody">
-                            </tbody>
+                        <tbody id="tableBody"></tbody>
                     </table>
                 </div>
 
                 <div class="action-section p-4 bg-light rounded-3 mt-4">
                     <div class="row g-4 align-items-end">
                         <div class="col-md-5">
-                            <label class="form-label fw-bold">เบอร์โทรศัพท์ติดต่อกลับ</label>
-                            <input type="tel" class="form-control form-control-lg" id="phoneInput" placeholder="08x-xxx-xxxx">
+                            <label class="form-label fw-bold">เบอร์โทรศัพท์ติดต่อกลับ <span class="text-danger">*</span></label>
+                            <input type="tel" 
+                                class="form-control form-control-lg" 
+                                id="phoneInput" 
+                                placeholder="0xx-xxx-xxxx"
+                                maxlength="12"
+                                inputmode="numeric">
+                            <div id="phoneError" class="text-danger small mt-1" style="min-height: 20px;"></div>
                         </div>
                         <div class="col-md-7 text-md-end">
                             <div class="text-muted">ยอดเงินที่เลือก</div>
@@ -177,122 +151,119 @@
                         <button class="btn btn-light" onclick="resetForm()">รีเซ็ต</button>
                         <button class="btn btn-primary px-4" style="background: #4a148c; border:none;" onclick="confirmPayment()">ยืนยันชำระเงิน</button>
                     </div>
-                    
                 </div>
-
             </div>
         </div>
     </div>
 
     <script>
-        // 1. Mock Data (Paid, Pending, Unpaid)
         const feePerMonth = 40;
         const monthsData = [
-            { name: 'ต.ค.', status: 'paid' },
-            { name: 'พ.ย.', status: 'paid' },
-            { name: 'ธ.ค.', status: 'paid' },
-            { name: 'ม.ค.', status: 'pending' },
-            { name: 'ก.พ.', status: 'unpaid' },
-            { name: 'มี.ค.', status: 'unpaid' },
-            { name: 'เม.ย.', status: 'unpaid' },
-            { name: 'พ.ค.', status: 'unpaid' },
-            { name: 'มิ.ย.', status: 'unpaid' },
-            { name: 'ก.ค.', status: 'unpaid' },
-            { name: 'ส.ค.', status: 'unpaid' },
-            { name: 'ก.ย.', status: 'unpaid' }
+            { name: 'ต.ค.', status: 'paid' }, { name: 'พ.ย.', status: 'paid' },
+            { name: 'ธ.ค.', status: 'paid' }, { name: 'ม.ค.', status: 'pending' },
+            { name: 'ก.พ.', status: 'unpaid' }, { name: 'มี.ค.', status: 'unpaid' },
+            { name: 'เม.ย.', status: 'unpaid' }, { name: 'พ.ค.', status: 'unpaid' },
+            { name: 'มิ.ย.', status: 'unpaid' }, { name: 'ก.ค.', status: 'unpaid' },
+            { name: 'ส.ค.', status: 'unpaid' }, { name: 'ก.ย.', status: 'unpaid' }
         ];
 
-        const tableBody = document.getElementById('tableBody');
-        const totalDisplay = document.getElementById('grandTotal');
+        const phoneInput = document.getElementById('phoneInput');
+        const phoneError = document.getElementById('phoneError');
+
+        // Automatic Formatting
+        phoneInput.addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\D/g, '');
+            phoneInput.classList.remove('is-invalid');
+            phoneError.innerText = "";
+
+            let formattedValue = '';
+            if (value.length > 0) {
+                formattedValue += value.substring(0, 3);
+                if (value.length > 3) formattedValue += '-' + value.substring(3, 6);
+                if (value.length > 6) formattedValue += '-' + value.substring(6, 10);
+            }
+            e.target.value = formattedValue;
+        });
+
+        // Validation Logic
+        function confirmPayment() {
+            const value = phoneInput.value.trim();
+            const rawPhone = value.replace(/\D/g, '');
+            const prefix = rawPhone.substring(0, 2);
+            const validPrefixes = ['06', '08', '09'];
+
+            // 1. Check if empty
+            if (!value) {
+                showError("กรุณาระบุเบอร์โทรศัพท์");
+                return;
+            }
+
+            // 2. Check Thai mobile prefix
+            if (rawPhone.length >= 2 && !validPrefixes.includes(prefix)) {
+                showError("เบอร์โทรศัพท์ต้องขึ้นต้นด้วย 06, 08 หรือ 09 เท่านั้น");
+                return;
+            }
+
+            // 3. Check for exactly 10 digits
+            if (rawPhone.length < 10) {
+                showError("กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก");
+                return;
+            }
+
+            // All valid - proceed
+            window.location.href = "upload.html";
+        }
+
+        function showError(message) {
+            phoneError.innerText = message;
+            phoneInput.classList.add('is-invalid');
+            phoneInput.focus();
+        }
 
         function renderTable() {
+            const tableBody = document.getElementById('tableBody');
             let html = '';
             monthsData.forEach((item, index) => {
-                let rowClass = '';
-                let badgeClass = '';
-                let badgeText = '';
-                let checkboxHtml = '';
-
-                // --- 1. PAID LOGIC (Green) ---
+                let rowClass = '', badgeClass = '', badgeText = '', checkboxHtml = '';
                 if (item.status === 'paid') {
-                    rowClass = 'row-paid';
-                    badgeClass = 'status-paid';
+                    rowClass = 'row-paid'; badgeClass = 'status-paid';
                     badgeText = '<i class="bi bi-check-circle-fill"></i> ชำระแล้ว';
                     checkboxHtml = `<input class="form-check-input" type="checkbox" disabled checked style="opacity: 0.5;">`;
-                
-                // --- 2. PENDING LOGIC (Orange) ---
                 } else if (item.status === 'pending') {
-                    rowClass = 'row-pending';
-                    badgeClass = 'status-pending';
+                    rowClass = 'row-pending'; badgeClass = 'status-pending';
                     badgeText = '<i class="bi bi-hourglass-split"></i> กำลังตรวจสอบ';
                     checkboxHtml = `<input class="form-check-input" type="checkbox" disabled style="opacity: 0.5;">`;
-                
-                // --- 3. UNPAID LOGIC (Red/Normal) ---
                 } else {
-                    rowClass = ''; 
-                    badgeClass = 'status-overdue';
-                    badgeText = 'ค้างชำระ';
-                    checkboxHtml = `<input class="form-check-input pay-checkbox" type="checkbox" value="${feePerMonth}" id="chk_${index}" onchange="toggleRowHighlight(this)">`;
+                    badgeClass = 'status-overdue'; badgeText = 'ค้างชำระ';
+                    checkboxHtml = `<input class="form-check-input pay-checkbox" type="checkbox" value="${feePerMonth}" onchange="toggleRowHighlight(this)">`;
                 }
-
-                html += `
-                    <tr class="${rowClass}" id="tr_${index}">
-                        <td>${item.name}</td>
-                        <td class="text-end fw-bold">${feePerMonth}</td>
-                        <td class="text-center text-nowrap">
-                            <span class="status-badge ${badgeClass}">${badgeText}</span>
-                        </td>
-                        <td class="text-center">
-                            ${checkboxHtml}
-                        </td>
-                    </tr>
-                `;
+                html += `<tr class="${rowClass}"><td>${item.name}</td><td class="text-end fw-bold">${feePerMonth}</td><td class="text-center"><span class="status-badge ${badgeClass}">${badgeText}</span></td><td class="text-center">${checkboxHtml}</td></tr>`;
             });
             tableBody.innerHTML = html;
         }
 
-        // Highlight Row when Checked (Yellow)
         function toggleRowHighlight(checkbox) {
             const row = checkbox.closest('tr');
-            if (checkbox.checked) {
-                row.classList.add('row-checked');
-            } else {
-                row.classList.remove('row-checked');
-            }
+            checkbox.checked ? row.classList.add('row-checked') : row.classList.remove('row-checked');
             calculateTotal();
         }
 
-        // Calculate Total
         function calculateTotal() {
             const checkboxes = document.querySelectorAll('.pay-checkbox');
-            let total = 0;
-            checkboxes.forEach(box => {
-                if (box.checked) {
-                    total += parseFloat(box.value);
-                }
-            });
-            totalDisplay.innerText = total.toLocaleString();
+            let total = Array.from(checkboxes).reduce((sum, box) => box.checked ? sum + parseFloat(box.value) : sum, 0);
+            document.getElementById('grandTotal').innerText = total.toLocaleString();
         }
 
         function resetForm() {
-            const checkboxes = document.querySelectorAll('.pay-checkbox');
-            checkboxes.forEach(box => {
-                box.checked = false;
-                toggleRowHighlight(box);
-            });
-            document.getElementById('phoneInput').value = '';
+            document.querySelectorAll('.pay-checkbox').forEach(box => { box.checked = false; toggleRowHighlight(box); });
+            phoneInput.value = '';
+            phoneInput.classList.remove('is-invalid');
+            phoneError.innerText = "";
+            calculateTotal();
         }
 
-        function confirmPayment() {
-            window.location.href = "upload.html";
-        }
-
-        function back() {
-            window.location.href = "result.html";
-        }
-
+        function back() { window.location.href = "result.html"; }
         renderTable();
     </script>
-
 </body>
 </html>
