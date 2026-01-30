@@ -1,8 +1,12 @@
 <?php
-session_start();
-// Security Check: ต้องมี Token เท่านั้น
-if (!isset($_GET['token'])) { header("Location: index.php"); exit(); }
-// Sanitize Token
+// views/payment.php
+// ลบ session_start() ออก
+
+if (!isset($_GET['token'])) { 
+    // *** แก้ Redirect ให้ผ่าน Router ***
+    header("Location: ?page=search"); 
+    exit(); 
+}
 $token = htmlspecialchars($_GET['token'], ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
@@ -61,7 +65,7 @@ $token = htmlspecialchars($_GET['token'], ENT_QUOTES, 'UTF-8');
                     </div>
                     <hr>
                     <div class="d-flex justify-content-end gap-2">
-                        <a href="index.php" class="btn btn-outline-secondary">ยกเลิก</a>
+                        <a href="?page=search" class="btn btn-outline-secondary">ยกเลิก</a>
                         <button class="btn btn-primary px-5 btn-lg" style="background: #4a148c; border:none;" onclick="confirmPayment()">ยืนยันการชำระเงิน</button>
                     </div>
                 </div>
@@ -75,14 +79,13 @@ $token = htmlspecialchars($_GET['token'], ENT_QUOTES, 'UTF-8');
         const feePerMonth = 40;
         const monthNames = ['ต.ค.', 'พ.ย.', 'ธ.ค.', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.'];
 
-        // โหลดข้อมูลด้วย Token
         fetch(`api.php?action=get_detail&token=${userToken}`)
             .then(res => res.json())
             .then(data => {
-                if(data.status === 'error') { window.location.href = 'index.php'; return; }
+                // *** แก้ redirect JS ***
+                if(data.status === 'error') { window.location.href = '?page=search'; return; }
                 const user = data.data;
                 
-                // แสดงข้อมูลผู้ใช้
                 document.getElementById('userInfoCard').innerHTML = `
                     <div class="row g-2">
                         <div class="col-md-6"><span class="fw-bold text-secondary">ชื่อผู้ชำระ:</span> <span class="text-dark fw-bold">${user.name}</span></div>
@@ -100,24 +103,16 @@ $token = htmlspecialchars($_GET['token'], ENT_QUOTES, 'UTF-8');
                 let statusBadge = '', rowClass = '', checkHtml = '';
                 
                 if (status === 1) {
-                    statusBadge = '<span class="status-badge status-paid"><i class="bi bi-check-circle-fill"></i> ชำระแล้ว</span>';
-                    rowClass = 'row-paid';
+                    statusBadge = '<span class="status-badge status-paid"><i class="bi bi-check-circle-fill"></i> ชำระแล้ว</span>'; rowClass = 'row-paid';
                     checkHtml = '<input type="checkbox" class="form-check-input" disabled checked style="opacity:0.5">';
                 } else if (status === 2) {
-                    statusBadge = '<span class="status-badge status-pending"><i class="bi bi-hourglass-split"></i> รอตรวจสอบ</span>';
-                    rowClass = 'row-pending';
+                    statusBadge = '<span class="status-badge status-pending"><i class="bi bi-hourglass-split"></i> รอตรวจสอบ</span>'; rowClass = 'row-pending';
                     checkHtml = '<input type="checkbox" class="form-check-input" disabled style="opacity:0.5">';
                 } else {
                     statusBadge = '<span class="status-badge status-overdue">ค้างชำระ</span>';
                     checkHtml = `<input type="checkbox" class="form-check-input pay-checkbox" value="${index}" onchange="calculateTotal()">`;
                 }
-
-                html += `<tr class="${rowClass}">
-                    <td>${monthNames[index]}</td>
-                    <td class="text-end fw-bold">${feePerMonth}</td>
-                    <td class="text-center">${statusBadge}</td>
-                    <td class="text-center">${checkHtml}</td>
-                </tr>`;
+                html += `<tr class="${rowClass}"><td>${monthNames[index]}</td><td class="text-end fw-bold">${feePerMonth}</td><td class="text-center">${statusBadge}</td><td class="text-center">${checkHtml}</td></tr>`;
             });
             tbody.innerHTML = html;
         }
@@ -137,7 +132,6 @@ $token = htmlspecialchars($_GET['token'], ENT_QUOTES, 'UTF-8');
             let monthsToPay = [];
             checkboxes.forEach(box => monthsToPay.push(parseInt(box.value)));
 
-            // ส่งข้อมูลไปคำนวณที่ Server
             fetch('api.php?action=confirm_payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -145,7 +139,8 @@ $token = htmlspecialchars($_GET['token'], ENT_QUOTES, 'UTF-8');
             }).then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
-                    window.location.href = 'upload.php'; // ไปหน้า Upload อย่างปลอดภัย
+                    // *** แก้ลิงก์ไปหน้า Upload ***
+                    window.location.href = '?page=upload'; 
                 } else {
                     Swal.fire('เกิดข้อผิดพลาด', data.message, 'error').then(() => {
                         if(data.redirect) window.location.href = data.redirect;

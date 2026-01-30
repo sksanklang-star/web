@@ -1,8 +1,10 @@
 <?php
-session_start();
-// Security Check: ต้องผ่านการคำนวณเงินจาก Server มาก่อน
+// views/upload.php
+// ลบ session_start()
+
 if (!isset($_SESSION['payment_summary']) || !isset($_SESSION['current_user_data'])) {
-    header("Location: index.php");
+    // *** แก้ Redirect ให้ผ่าน Router ***
+    header("Location: ?page=search");
     exit();
 }
 
@@ -123,7 +125,6 @@ $userData = $_SESSION['current_user_data'];
                 return;
             }
 
-            // Mock Upload Process
             Swal.fire({
                 title: 'กำลังบันทึกข้อมูล...',
                 timer: 2000,
@@ -137,7 +138,8 @@ $userData = $_SESSION['current_user_data'];
                     confirmButtonText: 'กลับหน้าหลัก'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        window.location.href = 'index.php'; // กลับหน้าแรกและ Clear Session
+                        // *** แก้ลิงก์กลับหน้าหลัก Router ***
+                        window.location.href = '?page=search'; 
                     }
                 });
             });

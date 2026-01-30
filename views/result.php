@@ -1,4 +1,7 @@
-<?php session_start(); ?>
+<?php 
+// views/result.php
+// ไม่ต้องใส่ session_start()
+?>
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -28,7 +31,7 @@
                 <div class="alert alert-light border mb-4 text-muted"><i class="bi bi-info-circle me-2"></i> ผลการค้นหาสำหรับบ้านเลขที่: <strong id="searchKeyword">-</strong></div>
                 <div id="resultsContainer" class="text-center py-4"><div class="spinner-border text-primary"></div> กำลังโหลดข้อมูล...</div>
                 <div class="mt-5 text-center">
-                    <a href="index.php" class="btn btn-light text-muted px-4 rounded-pill"><i class="bi bi-arrow-left"></i> กลับไปหน้าค้นหา</a>
+                    <a href="?page=search" class="btn btn-light text-muted px-4 rounded-pill"><i class="bi bi-arrow-left"></i> กลับไปหน้าค้นหา</a>
                 </div>
             </div>
         </div>
@@ -46,7 +49,6 @@
                 
                 if(data.data && data.data.length > 0) {
                     data.data.forEach(user => {
-                        // ใช้ Token แทน ID
                         container.innerHTML += `
                             <div class="result-card">
                                 <div class="row align-items-center g-3">
@@ -70,7 +72,8 @@
             });
 
         function selectUser(token) {
-            window.location.href = `payment.php?token=${token}`;
+            // *** แก้ลิงก์ไปหน้า Payment ***
+            window.location.href = `?page=payment&token=${token}`;
         }
     </script>
 </body>
