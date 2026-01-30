@@ -1,76 +1,95 @@
 <?php
 session_start();
-// Security Check: ถ้าไม่มี ID ส่งมา ดีดกลับหน้าแรก
-if (!isset($_GET['id'])) {
-    header("Location: index.php");
-    exit();
-}
+// Security Check: ต้องมี Token เท่านั้น
+if (!isset($_GET['token'])) { header("Location: index.php"); exit(); }
+// Sanitize Token
+$token = htmlspecialchars($_GET['token'], ENT_QUOTES, 'UTF-8');
 ?>
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>คำนวณยอดชำระ</title>
+    <title>คำนวณยอดชำระเงิน</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Kanit', sans-serif; background-color: #f4f6f9; padding: 20px 0; }
-        .main-card { background: white; border-radius: 15px; max-width: 900px; margin: 0 auto; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
-        .header-section { background: linear-gradient(135deg, #4a148c 0%, #7c43bd 100%); color: white; padding: 30px; text-align: center; }
-        .row-paid { background-color: #e8f5e9; color: #2e7d32; }
-        .row-pending { background-color: #fff8e1; color: #e65100; }
+        body { font-family: 'Kanit', sans-serif; background-color: #f4f6f9; padding: 20px 0; min-height: 100vh; }
+        .main-card { border: none; border-radius: 15px; background: white; max-width: 900px; margin: 0 auto; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        .header-section { background: linear-gradient(135deg, #4a148c 0%, #7c43bd 100%); color: white; padding: 30px 20px; text-align: center; }
+        .info-card { background-color: #f8f9fa; border-radius: 12px; padding: 20px; border-left: 5px solid #4a148c; margin-bottom: 25px; }
+        .row-paid { background-color: #e8f5e9 !important; color: #2e7d32; }
+        .row-pending { background-color: #fff8e1 !important; color: #e65100; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: inline-block; }
+        .status-overdue { background-color: #ffebee; color: #c62828; }
+        .status-paid { background-color: #c8e6c9; color: #2e7d32; }
+        .status-pending { background-color: #ffe0b2; color: #e65100; }
         .total-display { font-size: 1.8rem; font-weight: 600; color: #4a148c; }
+        .pay-checkbox { width: 1.3em; height: 1.3em; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="main-card">
             <div class="header-section">
-                <h3>คำนวณยอดชำระ</h3>
+                <h3 class="fw-bold mb-1"><i class="bi bi-calculator"></i> คำนวณยอดชำระเงิน</h3>
+                <small>ตรวจสอบสถานะและเลือกรายการที่ต้องการชำระ</small>
             </div>
             <div class="card-body p-4">
-                <div id="userInfo" class="alert alert-light border mb-4">
-                    </div>
+                <div class="info-card" id="userInfoCard">
+                    <div class="text-center"><div class="spinner-border spinner-border-sm text-primary"></div> กำลังโหลดข้อมูล...</div>
+                </div>
 
                 <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead><tr><th>เดือน</th><th class="text-end">ยอดเงิน</th><th>สถานะ</th><th>เลือก</th></tr></thead>
+                    <table class="table align-middle mb-0 table-hover">
+                        <thead class="table-light"><tr><th>เดือน</th><th class="text-end">ยอดเงิน</th><th class="text-center">สถานะ</th><th class="text-center">เลือก</th></tr></thead>
                         <tbody id="tableBody"></tbody>
                     </table>
                 </div>
 
-                <div class="bg-light p-4 rounded mt-4">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <label>เบอร์โทรศัพท์ <span class="text-danger">*</span></label>
-                        <input type="tel" id="phoneInput" class="form-control w-50" placeholder="0xx-xxx-xxxx">
+                <div class="bg-light p-4 rounded-3 mt-4">
+                    <div class="row g-4 align-items-end">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">เบอร์โทรศัพท์ติดต่อกลับ <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control form-control-lg" id="phoneInput" placeholder="0xx-xxx-xxxx" maxlength="10">
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <div class="text-muted">ยอดชำระรวม (โดยประมาณ)</div>
+                            <div class="total-display"><span id="grandTotal">0</span> บาท</div>
+                        </div>
                     </div>
-                    <div class="text-end mb-3">
-                        <div class="text-muted">ยอดรวมที่ต้องชำระ</div>
-                        <div class="total-display"><span id="grandTotal">0</span> บาท</div>
+                    <hr>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="index.php" class="btn btn-outline-secondary">ยกเลิก</a>
+                        <button class="btn btn-primary px-5 btn-lg" style="background: #4a148c; border:none;" onclick="confirmPayment()">ยืนยันการชำระเงิน</button>
                     </div>
-                    <button class="btn btn-primary w-100 py-3" style="background:#4a148c;" onclick="confirmPayment()">ยืนยันการชำระเงิน</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        const userId = <?php echo $_GET['id']; ?>;
+        const userToken = "<?php echo $token; ?>";
         const feePerMonth = 40;
-        let selectedMonths = [];
         const monthNames = ['ต.ค.', 'พ.ย.', 'ธ.ค.', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.'];
 
-        // โหลดข้อมูลจาก API (get_detail)
-        fetch(`api.php?action=get_detail&id=${userId}`)
+        // โหลดข้อมูลด้วย Token
+        fetch(`api.php?action=get_detail&token=${userToken}`)
             .then(res => res.json())
             .then(data => {
-                if(data.status === 'error') { alert('ไม่พบข้อมูล'); window.location.href='index.php'; return; }
-                
+                if(data.status === 'error') { window.location.href = 'index.php'; return; }
                 const user = data.data;
-                document.getElementById('userInfo').innerHTML = `<strong>${user.name}</strong> - บ้านเลขที่ ${user.houseNo}`;
                 
+                // แสดงข้อมูลผู้ใช้
+                document.getElementById('userInfoCard').innerHTML = `
+                    <div class="row g-2">
+                        <div class="col-md-6"><span class="fw-bold text-secondary">ชื่อผู้ชำระ:</span> <span class="text-dark fw-bold">${user.name}</span></div>
+                        <div class="col-md-6"><span class="fw-bold text-secondary">ปีงบประมาณ:</span> <span class="text-dark fw-bold">${user.year}</span></div>
+                        <div class="col-md-12"><span class="fw-bold text-secondary">ที่อยู่:</span> <span class="text-dark">บ้านเลขที่ ${user.houseNo} หมู่ที่ ${user.village}</span></div>
+                    </div>
+                `;
                 renderTable(user.months);
             });
 
@@ -78,58 +97,59 @@ if (!isset($_GET['id'])) {
             const tbody = document.getElementById('tableBody');
             let html = '';
             monthsStatus.forEach((status, index) => {
-                let statusText = '', rowClass = '', checkHtml = '';
+                let statusBadge = '', rowClass = '', checkHtml = '';
                 
-                if (status === 1) { // จ่ายแล้ว
-                    statusText = '<span class="badge bg-success">ชำระแล้ว</span>';
+                if (status === 1) {
+                    statusBadge = '<span class="status-badge status-paid"><i class="bi bi-check-circle-fill"></i> ชำระแล้ว</span>';
                     rowClass = 'row-paid';
-                    checkHtml = '<input type="checkbox" disabled checked>';
-                } else if (status === 2) { // รอตรวจสอบ
-                    statusText = '<span class="badge bg-warning text-dark">รอตรวจสอบ</span>';
+                    checkHtml = '<input type="checkbox" class="form-check-input" disabled checked style="opacity:0.5">';
+                } else if (status === 2) {
+                    statusBadge = '<span class="status-badge status-pending"><i class="bi bi-hourglass-split"></i> รอตรวจสอบ</span>';
                     rowClass = 'row-pending';
-                    checkHtml = '<input type="checkbox" disabled>';
-                } else { // ค้างชำระ
-                    statusText = '<span class="badge bg-danger">ค้างชำระ</span>';
-                    checkHtml = `<input type="checkbox" class="pay-checkbox" value="${index}" onchange="calculateTotal()">`;
+                    checkHtml = '<input type="checkbox" class="form-check-input" disabled style="opacity:0.5">';
+                } else {
+                    statusBadge = '<span class="status-badge status-overdue">ค้างชำระ</span>';
+                    checkHtml = `<input type="checkbox" class="form-check-input pay-checkbox" value="${index}" onchange="calculateTotal()">`;
                 }
 
                 html += `<tr class="${rowClass}">
                     <td>${monthNames[index]}</td>
-                    <td class="text-end">${feePerMonth}</td>
-                    <td>${statusText}</td>
-                    <td>${checkHtml}</td>
+                    <td class="text-end fw-bold">${feePerMonth}</td>
+                    <td class="text-center">${statusBadge}</td>
+                    <td class="text-center">${checkHtml}</td>
                 </tr>`;
             });
             tbody.innerHTML = html;
         }
 
         function calculateTotal() {
-            const checkboxes = document.querySelectorAll('.pay-checkbox:checked');
-            const total = checkboxes.length * feePerMonth;
-            document.getElementById('grandTotal').innerText = total;
+            const count = document.querySelectorAll('.pay-checkbox:checked').length;
+            document.getElementById('grandTotal').innerText = (count * feePerMonth).toLocaleString();
         }
 
         function confirmPayment() {
             const phone = document.getElementById('phoneInput').value;
             const checkboxes = document.querySelectorAll('.pay-checkbox:checked');
             
-            if(checkboxes.length === 0) { alert('กรุณาเลือกเดือนที่ต้องการชำระ'); return; }
-            if(!phone) { alert('กรุณากรอกเบอร์โทรศัพท์'); return; }
+            if(checkboxes.length === 0) { Swal.fire('แจ้งเตือน', 'กรุณาเลือกเดือนที่ต้องการชำระ', 'warning'); return; }
+            if(!phone || phone.length < 9) { Swal.fire('แจ้งเตือน', 'กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง', 'warning'); return; }
 
-            // รวบรวมข้อมูลเดือนที่เลือก
             let monthsToPay = [];
-            checkboxes.forEach(box => monthsToPay.push(box.value));
-            const total = checkboxes.length * feePerMonth;
+            checkboxes.forEach(box => monthsToPay.push(parseInt(box.value)));
 
-            // ส่งข้อมูลกลับไปหา API เพื่อ Lock Session (Security)
+            // ส่งข้อมูลไปคำนวณที่ Server
             fetch('api.php?action=confirm_payment', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ total: total, months: monthsToPay, phone: phone })
+                body: JSON.stringify({ months: monthsToPay, phone: phone })
             }).then(res => res.json())
             .then(data => {
                 if(data.status === 'success') {
                     window.location.href = 'upload.php'; // ไปหน้า Upload อย่างปลอดภัย
+                } else {
+                    Swal.fire('เกิดข้อผิดพลาด', data.message, 'error').then(() => {
+                        if(data.redirect) window.location.href = data.redirect;
+                    });
                 }
             });
         }
