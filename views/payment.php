@@ -83,7 +83,7 @@ $token = htmlspecialchars($_GET['token'], ENT_QUOTES, 'UTF-8');
             .then(res => res.json())
             .then(data => {
                 // *** แก้ redirect JS ***
-                if(data.status === 'error') { window.location.href = '?page=search'; return; }
+                if(data.status === 'error') { window.location.href = '/?page=search'; return; }
                 const user = data.data;
                 
                 document.getElementById('userInfoCard').innerHTML = `
@@ -140,7 +140,7 @@ $token = htmlspecialchars($_GET['token'], ENT_QUOTES, 'UTF-8');
             .then(data => {
                 if(data.status === 'success') {
                     // *** แก้ลิงก์ไปหน้า Upload ***
-                    window.location.href = '?page=upload'; 
+                    window.location.href = '/?page=upload'; 
                 } else {
                     Swal.fire('เกิดข้อผิดพลาด', data.message, 'error').then(() => {
                         if(data.redirect) window.location.href = data.redirect;

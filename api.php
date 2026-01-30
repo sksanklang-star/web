@@ -90,7 +90,7 @@ if ($action === 'confirm_payment') {
     
     if (!isset($_SESSION['current_user_data'])) {
         // *** แก้ตรงนี้: ให้ Redirect ไปหน้าแรกผ่าน Router ***
-        echo json_encode(['status' => 'error', 'message' => 'Session Timeout', 'redirect' => '?page=search']);
+        echo json_encode(['status' => 'error', 'message' => 'Session Timeout', 'redirect' => '/?page=search']);
         exit;
     }
 

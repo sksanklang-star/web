@@ -139,7 +139,7 @@ $userData = $_SESSION['current_user_data'];
                 }).then((result) => {
                     if (result.isConfirmed) {
                         // *** แก้ลิงก์กลับหน้าหลัก Router ***
-                        window.location.href = '?page=search'; 
+                        window.location.href = '/?page=search'; 
                     }
                 });
             });

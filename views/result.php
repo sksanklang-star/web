@@ -73,7 +73,7 @@
 
         function selectUser(token) {
             // *** แก้ลิงก์ไปหน้า Payment ***
-            window.location.href = `?page=payment&token=${token}`;
+            window.location.href = `/?page=payment&token=${token}`;
         }
     </script>
 </body>

@@ -65,7 +65,7 @@
             const formData = new FormData(this);
             const params = new URLSearchParams(formData).toString();
             // *** แก้ลิงก์ตรงนี้เป็น ?page=result ***
-            window.location.href = `?page=result&${params}`;
+            window.location.href = `/?page=result&${params}`;
         });
     </script>
 </body>
